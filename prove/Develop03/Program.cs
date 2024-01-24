@@ -6,7 +6,7 @@ using System.Threading;
 
 class Program
 {
-    static void Main()
+    static void Main(string[] args)
     {
         Console.WriteLine("Week 03 Develop: Ogedz Scripture Memorizer");
 
