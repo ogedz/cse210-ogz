@@ -1,4 +1,5 @@
-using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 class Program
@@ -12,41 +13,45 @@ class Program
 
 class MindfulnessApp
 {
+    private List<Activity> activities;
+
+    public MindfulnessApp()
+    {
+        activities = new List<Activity>
+        {
+            new BreathingActivity(),
+            new ReflectionActivity(),
+            new ListingActivity(),
+            new CustomActivity() 
+        };
+    }
+
     public void Start()
     {
         while (true)
         {
             Console.WriteLine("Mindfulness Program");
-            Console.WriteLine("1. Breathing Activity");
-            Console.WriteLine("2. Reflection Activity");
-            Console.WriteLine("3. Listing Activity");
-            Console.WriteLine("4. Exit");
+            Console.WriteLine("0. Exit");
+
+            for (int i = 0; i < activities.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {activities[i].GetType().Name}");
+            }
 
             Console.Write("Enter your choice: ");
-            if (int.TryParse(Console.ReadLine(), out int choice))
+            if (int.TryParse(Console.ReadLine(), out int choice) && choice >= 0 && choice <= activities.Count)
             {
-                switch (choice)
+                if (choice == 0)
                 {
-                    case 1:
-                        RunActivity(new BreathingActivity());
-                        break;
-                    case 2:
-                        RunActivity(new ReflectionActivity());
-                        break;
-                    case 3:
-                        RunActivity(new ListingActivity());
-                        break;
-                    case 4:
-                        Console.WriteLine("Exiting the program.");
-                        return;
-                    default:
-                        Console.WriteLine("Invalid choice. Please enter a number between 1 and 4.");
-                        break;
+                    Console.WriteLine("Exiting the program.");
+                    return;
                 }
+
+                RunActivity(activities[choice - 1]);
             }
             else
             {
-                Console.WriteLine("Invalid input. Please enter a number.");
+                Console.WriteLine("Invalid input. Please enter a number between 0 and 4.");
             }
         }
     }
@@ -56,6 +61,9 @@ class MindfulnessApp
         activity.Start();
         Console.WriteLine("Activity completed!");
         Console.WriteLine();
+
+        // Keeping a log 
+        activity.LogActivity();
     }
 }
 
@@ -86,6 +94,12 @@ abstract class Activity
     {
         Console.WriteLine($"Good job! You've completed the {GetType().Name} activity for {Duration} seconds.");
         Pause(3);
+    }
+
+    // Keeping a log
+    public virtual void LogActivity()
+    {
+        Console.WriteLine($"Logging activity: {GetType().Name}");
     }
 }
 
@@ -129,12 +143,19 @@ class ReflectionActivity : Activity
         "How can you keep this experience in mind in the future?"
     };
 
+    private List<string> usedPrompts;
+
+    public ReflectionActivity()
+    {
+        usedPrompts = new List<string>();
+    }
+
     public override void Start()
     {
         base.Start();
         Console.WriteLine("This activity will help you reflect on times in your life when you have shown strength and resilience. This will help you recognize the power you have and how you can use it in other aspects of your life.");
 
-        string randomPrompt = prompts[new Random().Next(prompts.Length)];
+        string randomPrompt = GetRandomPrompt();
         Console.WriteLine(randomPrompt);
 
         foreach (string question in questions)
@@ -144,6 +165,29 @@ class ReflectionActivity : Activity
         }
 
         End();
+    }
+
+    private string GetRandomPrompt()
+    {
+        if (!prompts.Except(usedPrompts).Any())
+        {
+            usedPrompts.Clear(); // Reset used prompts
+        }
+
+        string randomPrompt;
+        do
+        {
+            randomPrompt = prompts[new Random().Next(prompts.Length)];
+        } while (usedPrompts.Contains(randomPrompt));
+
+        usedPrompts.Add(randomPrompt);
+        return randomPrompt;
+    }
+
+    public override void LogActivity()
+    {
+        base.LogActivity();
+        Console.WriteLine($"Used prompts: {string.Join(", ", usedPrompts)}");
     }
 }
 
@@ -177,6 +221,24 @@ class ListingActivity : Activity
         }
 
         Console.WriteLine($"You listed {Duration} items.");
+
+        End();
+    }
+}
+
+// Addition 
+class CustomActivity : Activity
+{
+    public override void Start()
+    {
+        base.Start();
+        Console.WriteLine("This is a custom activity. Feel free to define its purpose.");
+
+        for (int i = 0; i < Duration; i++)
+        {
+            Console.WriteLine("Performing custom activity step...");
+            Pause(2);
+        }
 
         End();
     }
