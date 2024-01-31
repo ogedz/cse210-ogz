@@ -22,7 +22,7 @@ class MindfulnessApp
             new BreathingActivity(),
             new ReflectionActivity(),
             new ListingActivity(),
-            new CustomActivity() 
+            new PersonalizedActivity () 
         };
     }
 
@@ -226,20 +226,32 @@ class ListingActivity : Activity
     }
 }
 
-// Addition 
-class CustomActivity : Activity
+class PersonalizedActivity : Activity
 {
     public override void Start()
     {
         base.Start();
-        Console.WriteLine("This is a custom activity. Feel free to define its purpose.");
+        Console.WriteLine("This is a personalized activity designed to promote relaxation and boost creativity.");
 
-        for (int i = 0; i < Duration; i++)
-        {
-            Console.WriteLine("Performing custom activity step...");
-            Pause(2);
-        }
+        Console.WriteLine("Follow the steps below:");
+
+        // Personalized Steps
+        PerformStep("Close your eyes and take three deep breaths.");
+        PerformStep("Imagine a peaceful natural setting, like a serene beach or a quiet forest.");
+        PerformStep("Focus on positive affirmations related to creativity and relaxation.");
+        PerformStep("Engage in a brief creative exercise, such as drawing or writing.");
+        PerformStep("Savor a calming tea or beverage of your choice.");
+        PerformStep("Listen to soothing music or sounds.");
+        PerformStep("Express gratitude for something positive in your life.");
+        // Add more steps as needed
 
         End();
     }
+
+    private void PerformStep(string step)
+    {
+        Console.WriteLine($"Step: {step}");
+        Pause(3);
+    }
 }
+
