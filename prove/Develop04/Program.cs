@@ -254,7 +254,7 @@ class PersonalizedActivity : Activity
     private void PerformStep(string step)
     {
         Console.WriteLine($"Step: {step}");
-        Pause(4);
+        Pause(3);
     }
 }
 
