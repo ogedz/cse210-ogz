@@ -235,7 +235,7 @@ class PersonalizedActivity : Activity
 
         Console.WriteLine("Follow the steps below:");
 
-        // Personalized Steps
+        // Steps
         PerformStep("Close your eyes and take three deep breaths.");
         PerformStep("Imagine a peaceful natural setting, like a serene beach or a quiet forest.");
         PerformStep("Focus on positive affirmations related to creativity and relaxation.");
@@ -243,7 +243,10 @@ class PersonalizedActivity : Activity
         PerformStep("Savor a calming tea or beverage of your choice.");
         PerformStep("Listen to soothing music or sounds.");
         PerformStep("Express gratitude for something positive in your life.");
-        // Add more steps as needed
+        PerformStep("Take a mindful walk, paying attention to each step and your surroundings.");
+        PerformStep("Disconnect from electronic devices for a few minutes.");
+        PerformStep("Stretch and release tension from your body.");
+        PerformStep("Write down any creative ideas that come to mind.");
 
         End();
     }
@@ -251,7 +254,8 @@ class PersonalizedActivity : Activity
     private void PerformStep(string step)
     {
         Console.WriteLine($"Step: {step}");
-        Pause(3);
+        Pause(4);
     }
 }
+
 
