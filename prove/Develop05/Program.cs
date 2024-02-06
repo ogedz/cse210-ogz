@@ -182,8 +182,8 @@ public static class GoalManager
             case nameof(EternalGoal):
                 return new EternalGoal(name, points);
             case nameof(ChecklistGoal):
-                return new ChecklistGoal(name, points, 10); // Default target count for checklist goal
-            case nameof(PenaltyGoal): // Add case for PenaltyGoal
+                return new ChecklistGoal(name, points, 10); 
+            case nameof(PenaltyGoal): 
                 return new PenaltyGoal(name, points);
             default:
                 throw new ArgumentException($"Unknown goal type: {goalType}");
