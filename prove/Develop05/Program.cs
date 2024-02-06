@@ -334,7 +334,7 @@ class Program
     {
         List<Goal> goals = GoalManager.LoadGoals();
         User user = InitializeUser();
-        List<Quest> quests = InitializeQuests(); // Initialize some quests
+        List<Quest> quests = InitializeQuests(); // Initialize some Quests
 
         while (true)
         {
