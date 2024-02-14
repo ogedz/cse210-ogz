@@ -1,5 +1,4 @@
 using System;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -91,12 +90,7 @@ class UserInterface
     public void DisplayWeatherForecast(WeatherForecast forecast, string city)
     {
         Console.WriteLine($"Weather Forecast for {city}");
-        Console.WriteLine($"Temperature: {forecast.Temp}°C");
-        Console.WriteLine($"Humidity: {forecast.Humidity}%");
-        Console.WriteLine($"Description: {forecast.Description}");
-        Console.WriteLine($"Wind Speed: {forecast.WindSpeed}m/s");
-        Console.WriteLine($"Wind Direction:{forecast.WindDirection}");
-        Console.WriteLine($"Pressure: {forecast.Pressure}hPa");
+        forecast.DisplayWeatherDetails();
     }
 
     public void DisplayErrorMessage(string message)
@@ -105,6 +99,65 @@ class UserInterface
     }
 }
 
+abstract class WeatherData
+{
+    public abstract void DisplayWeatherDetails();
+}
+
+class WeatherForecast : WeatherData
+{
+    public float Temp { get; set; }
+    public int Humidity { get; set; }
+    public string Description { get; set; }
+    public float WindSpeed { get; set; }
+    public string WindDirection { get; set; }
+    public int Pressure { get; set; }
+
+    public override void DisplayWeatherDetails()
+    {
+        Console.WriteLine($"Temperature: {Temp}°C");
+        Console.WriteLine($"Humidity: {Humidity}%");
+        Console.WriteLine($"Description: {Description}");
+        Console.WriteLine($"Wind Speed: {WindSpeed}m/s");
+        Console.WriteLine($"Wind Direction:{WindDirection}");
+        Console.WriteLine($"Pressure: {Pressure}hPa");
+    }
+}
+
+class WeatherForecastResponse : WeatherData
+{
+    public MainData Main { get; set; }
+    public WeatherInfo[] Weather { get; set; }
+    public WindInfo Wind { get; set; }
+
+    public override void DisplayWeatherDetails()
+    {
+        Console.WriteLine($"Temperature: {Main.Temp}°C");
+        Console.WriteLine($"Humidity: {Main.Humidity}%");
+        Console.WriteLine($"Description: {Weather[0].Description}");
+        Console.WriteLine($"Wind Speed: {Wind.Speed}m/s");
+        Console.WriteLine($"Wind Direction:{Wind.Direction}");
+        Console.WriteLine($"Pressure: {Main.Pressure}hPa");
+    }
+}
+
+class MainData
+{
+    public float Temp { get; set; }
+    public int Humidity { get; set; }
+    public int Pressure { get; set; }
+}
+
+class WeatherInfo
+{
+    public string Description { get; set; }
+}
+
+class WindInfo
+{
+    public float Speed { get; set; }
+    public string Direction { get; set; }
+}
 
 class WeatherAPI
 {
@@ -137,39 +190,4 @@ class WeatherAPI
 
         return forecast;
     }
-}
-
-class WeatherForecast
-{
-    public float Temp { get; set; }
-    public int Humidity { get; set; }
-    public string Description { get; set; }
-    public float WindSpeed { get; set; }
-    public string WindDirection { get; set; }
-    public int Pressure { get; set; }
-}
-
-class WeatherForecastResponse
-{
-    public MainData Main { get; set; }
-    public WeatherInfo[] Weather { get; set; }
-    public WindInfo Wind { get; set; }
-}
-
-class MainData
-{
-    public float Temp { get; set; }
-    public int Humidity { get; set; }
-    public int Pressure { get; set; }
-}
-
-class WeatherInfo
-{
-    public string Description { get; set; }
-}
-
-class WindInfo
-{
-    public float Speed { get; set; }
-    public string Direction { get; set; }
 }
