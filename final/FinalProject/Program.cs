@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -8,8 +8,44 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        WeatherApp app = new WeatherApp(new UserInterface(), new WeatherAPI());
-        await app.Run();
+        UserInterface userInterface = new UserInterface();
+
+        try
+        {
+            var userLocation = await GetUserLocationAsync();
+            userInterface.DisplayLocationAndDateTime(userLocation);
+            
+            WeatherAPI weatherAPI = new WeatherAPI();
+            userInterface.DisplayWelcomeMessage();
+            string city = userInterface.GetCityFromUser();
+            DateTime startDate = userInterface.GetDateFromUser();
+
+            var forecast = await weatherAPI.GetWeatherForecastAsync(city, startDate);
+            userInterface.DisplayWeatherForecast(forecast, city);
+        }
+        catch (HttpRequestException ex)
+        {
+            userInterface.DisplayErrorMessage($"Error retrieving weather data: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            userInterface.DisplayErrorMessage($"An unexpected error occurred: {ex.Message}");
+        }
+    }
+
+    static async Task<string> GetUserLocationAsync()
+    {
+        string apiKey = "660697df8e543bd50ae1fb60f8743610";
+        string url = $"http://api.ipstack.com/check?access_key={apiKey}";
+
+        using (var client = new HttpClient())
+        {
+            HttpResponseMessage response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+            dynamic locationData = JsonConvert.DeserializeObject(responseBody);
+            return $"{locationData.city}, {locationData.country_name}";
+        }
     }
 }
 
@@ -22,92 +58,58 @@ class UserInterface
 
     public string GetCityFromUser()
     {
-        Console.WriteLine("Do you want to use your current location? (Y/N): ");
-        string choice = Console.ReadLine()?.Trim().ToLower();
-
-        if (choice == "y" || choice == "yes")
-        {
-            return "current";
-        }
-        else
+        string city;
+        do
         {
             Console.Write("Enter city name: ");
-            return Console.ReadLine()?.Trim();
-        }
+            city = Console.ReadLine();
+        } while (string.IsNullOrWhiteSpace(city)); // handling error
+        return city;
     }
 
     public DateTime GetDateFromUser()
     {
-        Console.Write("Enter date (YYYY-MM-DD): ");
-        return DateTime.Parse(Console.ReadLine()?.Trim());
+        DateTime date;
+        string inputDate;
+        do
+        {
+            Console.Write("Enter date (MM-DD-YYYY): ");
+            inputDate = Console.ReadLine();
+        } while (!DateTime.TryParseExact(inputDate, "MM-dd-yyyy", null, System.Globalization.DateTimeStyles.None, out date)); // Keep prompting until a valid date is provided
+        return date;
     }
 
-    public void DisplayWeatherForecast(float temp, int humidity, string description, string city)
+    public void DisplayLocationAndDateTime(string location)
+    {
+        Console.WriteLine($"Your current location: {location}");
+
+        // Displaying current date and time
+        DateTime currentDateTime = DateTime.Now;
+        Console.WriteLine($"Current date and time: {currentDateTime.ToString("MM-dd-yyyy HH:mm:ss")}");
+    }
+
+    public void DisplayWeatherForecast(WeatherForecast forecast, string city)
     {
         Console.WriteLine($"Weather Forecast for {city}");
-        Console.WriteLine($"Temperature: {temp}°C");
-        Console.WriteLine($"Humidity: {humidity}%");
-        Console.WriteLine($"Weather: {description}");
+        Console.WriteLine($"Temperature: {forecast.Temp}°C");
+        Console.WriteLine($"Humidity: {forecast.Humidity}%");
+        Console.WriteLine($"Description: {forecast.Description}");
+        Console.WriteLine($"Wind Speed: {forecast.WindSpeed}m/s");
+        Console.WriteLine($"Wind Direction:{forecast.WindDirection}");
+        Console.WriteLine($"Pressure: {forecast.Pressure}hPa");
     }
 
     public void DisplayErrorMessage(string message)
     {
         Console.WriteLine($"Error: {message}");
     }
-
-    public void DisplayLocation(string city)
-    {
-        Console.WriteLine($"Your current location: {city}");
-    }
 }
 
-class WeatherApp
-{
-    private readonly UserInterface ui;
-    private readonly WeatherAPI weatherAPI;
-
-    public WeatherApp(UserInterface userInterface, WeatherAPI weatherApi)
-    {
-        ui = userInterface;
-        weatherAPI = weatherApi;
-    }
-
-    public async Task Run()
-    {
-        ui.DisplayWelcomeMessage();
-        string currentCity = await weatherAPI.GetCityFromIP();
-        ui.DisplayLocation(currentCity);
-
-        string city = ui.GetCityFromUser();
-
-        if (city == "current")
-        {
-            city = currentCity;
-        }
-
-        DateTime date = ui.GetDateFromUser();
-
-        try
-        {
-            var forecast = await weatherAPI.GetWeatherForecastAsync(city, date);
-            ui.DisplayWeatherForecast(forecast.Temp, forecast.Humidity, forecast.Description, city);
-        }
-        catch (HttpRequestException ex)
-        {
-            ui.DisplayErrorMessage($"Error retrieving weather data: {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            ui.DisplayErrorMessage($"An unexpected error occurred: {ex.Message}");
-        }
-    }
-}
 
 class WeatherAPI
 {
     private const string apiKey = "1e2bec4abb80b8f25eba7c9e5a5d556f";
     private const string apiUrl = "https://api.openweathermap.org/data/2.5/weather";
-    private const string ipApiUrl = "https://ipinfo.io/json";
     private readonly HttpClient client;
 
     public WeatherAPI()
@@ -120,22 +122,20 @@ class WeatherAPI
         HttpResponseMessage response = await client.GetAsync($"{apiUrl}?q={city}&appid={apiKey}&units=metric");
         response.EnsureSuccessStatusCode();
         string responseBody = await response.Content.ReadAsStringAsync();
-        var forecast = JsonConvert.DeserializeObject<WeatherForecastResponse>(responseBody);
-        return new WeatherForecast
-        {
-            Temp = forecast.Main.Temp,
-            Humidity = forecast.Main.Humidity,
-            Description = forecast.Weather[0].Description
-        };
-    }
+        var forecastResponse = JsonConvert.DeserializeObject<WeatherForecastResponse>(responseBody);
 
-    public async Task<string> GetCityFromIP()
-    {
-        HttpResponseMessage response = await client.GetAsync(ipApiUrl);
-        response.EnsureSuccessStatusCode();
-        string responseBody = await response.Content.ReadAsStringAsync();
-        var locationData = JsonConvert.DeserializeObject<LocationResponse>(responseBody);
-        return locationData.City;
+        // Extract relevant data from the response
+        var forecast = new WeatherForecast
+        {
+            Temp = forecastResponse.Main.Temp,
+            Humidity = forecastResponse.Main.Humidity,
+            Description = forecastResponse.Weather[0].Description,
+            WindSpeed = forecastResponse.Wind.Speed,
+            WindDirection = forecastResponse.Wind.Direction,
+            Pressure = forecastResponse.Main.Pressure,
+        };
+
+        return forecast;
     }
 }
 
@@ -144,18 +144,23 @@ class WeatherForecast
     public float Temp { get; set; }
     public int Humidity { get; set; }
     public string Description { get; set; }
+    public float WindSpeed { get; set; }
+    public string WindDirection { get; set; }
+    public int Pressure { get; set; }
 }
 
 class WeatherForecastResponse
 {
     public MainData Main { get; set; }
-    public List<WeatherInfo> Weather { get; set; }
+    public WeatherInfo[] Weather { get; set; }
+    public WindInfo Wind { get; set; }
 }
 
 class MainData
 {
     public float Temp { get; set; }
     public int Humidity { get; set; }
+    public int Pressure { get; set; }
 }
 
 class WeatherInfo
@@ -163,7 +168,8 @@ class WeatherInfo
     public string Description { get; set; }
 }
 
-class LocationResponse
+class WindInfo
 {
-    public string City { get; set; }
+    public float Speed { get; set; }
+    public string Direction { get; set; }
 }
