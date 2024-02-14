@@ -7,32 +7,48 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        UserInterface userInterface = new UserInterface();
+        WeatherApp weatherApp = new WeatherApp(new UserInterface(), new WeatherAPI());
 
         try
         {
-            var userLocation = await GetUserLocationAsync();
-            userInterface.DisplayLocationAndDateTime(userLocation);
-            
-            WeatherAPI weatherAPI = new WeatherAPI();
-            userInterface.DisplayWelcomeMessage();
-            string city = userInterface.GetCityFromUser();
-            DateTime startDate = userInterface.GetDateFromUser();
-
-            var forecast = await weatherAPI.GetWeatherForecastAsync(city, startDate);
-            userInterface.DisplayWeatherForecast(forecast, city);
+            await weatherApp.Run();
         }
         catch (HttpRequestException ex)
         {
-            userInterface.DisplayErrorMessage($"Error retrieving weather data: {ex.Message}");
+            weatherApp.DisplayErrorMessage($"Error retrieving weather data: {ex.Message}");
         }
         catch (Exception ex)
         {
-            userInterface.DisplayErrorMessage($"An unexpected error occurred: {ex.Message}");
+            weatherApp.DisplayErrorMessage($"An unexpected error occurred: {ex.Message}");
         }
     }
+}
 
-    static async Task<string> GetUserLocationAsync()
+class WeatherApp
+{
+    private readonly UserInterface userInterface;
+    private readonly WeatherAPI weatherAPI;
+
+    public WeatherApp(UserInterface ui, WeatherAPI api)
+    {
+        userInterface = ui;
+        weatherAPI = api;
+    }
+
+    public async Task Run()
+    {
+        var userLocation = await GetUserLocationAsync();
+        userInterface.DisplayLocationAndDateTime(userLocation);
+
+        userInterface.DisplayWelcomeMessage();
+        string city = userInterface.GetCityFromUser();
+        DateTime startDate = userInterface.GetDateFromUser();
+
+        var forecast = await weatherAPI.GetWeatherForecastAsync(city, startDate);
+        userInterface.DisplayWeatherForecast(forecast, city);
+    }
+
+    private async Task<string> GetUserLocationAsync()
     {
         string apiKey = "660697df8e543bd50ae1fb60f8743610";
         string url = $"http://api.ipstack.com/check?access_key={apiKey}";
@@ -45,6 +61,11 @@ class Program
             dynamic locationData = JsonConvert.DeserializeObject(responseBody);
             return $"{locationData.city}, {locationData.country_name}";
         }
+    }
+
+    public void DisplayErrorMessage(string message)
+    {
+        userInterface.DisplayErrorMessage(message);
     }
 }
 
