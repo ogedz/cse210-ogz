@@ -198,7 +198,7 @@ class WeatherAPI
         string responseBody = await response.Content.ReadAsStringAsync();
         var forecastResponse = JsonConvert.DeserializeObject<WeatherForecastResponse>(responseBody);
 
-        // Extract relevant data from the response
+        // Extract relevant data from the response of Open Weather
         var forecast = new WeatherForecast
         {
             Temp = forecastResponse.Main.Temp,
