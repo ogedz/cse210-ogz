@@ -50,8 +50,8 @@ class WeatherApp
 
     private async Task<string> GetUserLocationAsync()
     {
-        string apiKey = "660697df8e543bd50ae1fb60f8743610";
-        string url = $"http://api.ipstack.com/check?access_key={apiKey}";
+        string apiKey = "1203eb5d00b2466bb89befc93b06922f";
+        string url = $"https://api.ipgeolocation.io/ipgeo?apiKey={apiKey}";
 
         using (var client = new HttpClient())
         {
